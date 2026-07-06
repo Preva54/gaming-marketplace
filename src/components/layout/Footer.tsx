@@ -10,7 +10,7 @@ import toast from "react-hot-toast"
 const quickLinks = [
   { label: "Marketplace", href: "/marketplace" },
   { label: "Categories", href: "/categories" },
-  { label: "Sell Items", href: "/sell" },
+  { label: "Sell Items", href: "/seller" },
   { label: "Support", href: "/support" },
   { label: "Terms of Service", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },

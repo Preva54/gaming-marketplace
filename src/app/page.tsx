@@ -130,7 +130,7 @@ export default function Home() {
                   Explore Marketplace
                 </motion.button>
               </Link>
-              <Link href="/sell">
+              <Link href="/seller">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
