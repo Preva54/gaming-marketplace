@@ -10,8 +10,7 @@ type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT"
 
 interface SupportTicket {
   id: string
-  customer: string
-  email: string
+  userId: string
   subject: string
   message: string
   status: TicketStatus
@@ -77,7 +76,7 @@ export default function AdminSupportPage() {
     let result = tickets
     if (search) {
       const q = search.toLowerCase()
-      result = result.filter((t) => t.subject.toLowerCase().includes(q) || t.customer.toLowerCase().includes(q) || t.id.toLowerCase().includes(q))
+      result = result.filter((t) => t.subject.toLowerCase().includes(q) || t.userId.toLowerCase().includes(q) || t.id.toLowerCase().includes(q))
     }
     if (statusFilter !== "ALL") result = result.filter((t) => t.status === statusFilter)
     return result
@@ -172,7 +171,7 @@ export default function AdminSupportPage() {
                   </div>
                   <h3 className="font-semibold text-sm">{ticket.subject}</h3>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[var(--foreground)]/50">
-                    <span className="flex items-center gap-1"><FiUser size={12} /> {ticket.customer}</span>
+                    <span className="flex items-center gap-1"><FiUser size={12} /> {ticket.userId}</span>
                     <span>{formatDate(ticket.createdAt)}</span>
                   </div>
                 </div>

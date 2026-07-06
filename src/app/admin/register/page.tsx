@@ -14,7 +14,9 @@ export default function AdminRegisterPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" })
 
   useEffect(() => {
-    fetch("/api/users?current=true").then(r => r.json()).then(u => {
+    fetch("/api/users?current=true").then(async r => {
+      if (!r.ok) throw new Error()
+      const u = await r.json()
       if (u.role !== "ADMIN") { toast.error("Admins only"); router.push("/admin/login") }
       else setChecking(false)
     }).catch(() => { toast.error("Not authenticated"); router.push("/admin/login") })

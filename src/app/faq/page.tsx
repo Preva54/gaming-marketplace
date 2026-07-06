@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 import { FiSearch, FiChevronDown, FiMessageCircle } from "react-icons/fi"
 
 interface FAQItem {
@@ -138,9 +139,9 @@ export default function FAQPage() {
         >
           <h2 className="text-2xl font-bold mb-3">Still have questions?</h2>
           <p className="text-gray-400 mb-6">Our support team is ready to help you 24/7</p>
-          <a href="/contact" className="btn-primary inline-flex items-center gap-2">
+          <Link href="/contact" className="btn-primary inline-flex items-center gap-2">
             <FiMessageCircle /> Contact Support
-          </a>
+          </Link>
         </motion.div>
       </div>
     </div>

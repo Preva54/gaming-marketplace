@@ -57,9 +57,9 @@ export default function CartPage() {
           <p className="text-gray-400 mb-8">
             Looks like you haven&apos;t added any gaming goods yet!
           </p>
-          <a href="/marketplace" className="btn-primary inline-flex items-center gap-2">
+          <Link href="/marketplace" className="btn-primary inline-flex items-center gap-2">
             <FiArrowLeft /> Browse Marketplace
-          </a>
+          </Link>
         </motion.div>
       </div>
     )
@@ -216,12 +216,12 @@ export default function CartPage() {
                 Proceed to Checkout
               </Link>
 
-              <a
+              <Link
                 href="/marketplace"
                 className="block text-center text-sm text-gray-500 hover:text-purple-400 transition-colors"
               >
                 Continue Shopping
-              </a>
+              </Link>
             </div>
           </div>
         </div>

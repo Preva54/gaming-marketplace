@@ -23,7 +23,7 @@ export default function AdminDashboard() {
       fetch("/api/withdrawals").then(r => r.ok ? r.json() : []),
       fetch("/api/escrow").then(r => r.ok ? r.json() : []),
       fetch("/api/disputes").then(r => r.ok ? r.json() : []),
-      fetch("/api/users").then(r => r.ok ? r.json() : []),
+      fetch("/api/users").then(async r => { const d = r.ok ? await r.json() : {}; return d.users ?? [] }),
       fetch("/api/orders").then(r => r.ok ? r.json() : []),
     ]).then(([k, w, e, d, u, o]) => {
       setKycApps(Array.isArray(k) ? k : []); setWithdrawals(Array.isArray(w) ? w : []); setEscrows(Array.isArray(e) ? e : [])

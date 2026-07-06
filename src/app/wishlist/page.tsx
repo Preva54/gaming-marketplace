@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import Link from "next/link"
 import { FiHeart, FiShoppingCart, FiTrash2, FiLoader } from "react-icons/fi"
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types"
 import { formatPrice, truncate } from "@/lib/utils"
@@ -65,9 +66,9 @@ export default function WishlistPage() {
           <p className="text-gray-400 mb-8">
             Save items you love to your wishlist and come back anytime!
           </p>
-          <a href="/marketplace" className="btn-primary inline-flex items-center gap-2">
+          <Link href="/marketplace" className="btn-primary inline-flex items-center gap-2">
             Explore Products
-          </a>
+          </Link>
         </motion.div>
       </div>
     )
@@ -120,22 +121,22 @@ export default function WishlistPage() {
                 <FiTrash2 className="text-red-400 text-lg" />
               </button>
 
-              <a href={`/product/${product.id}`}>
+              <Link href={`/product/${product.id}`}>
                 <div className="aspect-square gradient-bg flex items-center justify-center text-5xl opacity-80 group-hover:opacity-100 transition-opacity">
                   {CATEGORY_ICONS[product.category as ProductCategory]}
                 </div>
-              </a>
+              </Link>
 
               <div className="p-4">
                 <span className="inline-block px-2 py-1 text-xs rounded-full bg-purple-500/20 text-purple-300 mb-2">
                   {CATEGORY_LABELS[product.category as ProductCategory]}
                 </span>
 
-                <a href={`/product/${product.id}`}>
+                <Link href={`/product/${product.id}`}>
                   <h3 className="font-semibold text-sm md:text-base mb-1 hover:text-purple-300 transition-colors">
                     {truncate(product.name, 30)}
                   </h3>
-                </a>
+                </Link>
 
                 <div className="flex items-center justify-between mt-3">
                   <span className="text-lg font-bold gradient-text">

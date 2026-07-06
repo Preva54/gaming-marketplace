@@ -5,8 +5,9 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { FiMail, FiLock, FiEye, FiEyeOff, FiGithub } from "react-icons/fi"
+import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
+import { SiDiscord } from "react-icons/si"
 import toast from "react-hot-toast"
 
 export default function LoginPage() {
@@ -157,7 +158,7 @@ export default function LoginPage() {
               onClick={() => handleSocialSignIn("discord")}
               className="flex items-center justify-center gap-2 btn-secondary text-sm py-3"
             >
-              <FiGithub size={20} className="text-[#5865F2]" />
+              <SiDiscord size={20} className="text-[#5865F2]" />
               Discord
             </motion.button>
           </div>

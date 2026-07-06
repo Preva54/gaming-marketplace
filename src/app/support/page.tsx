@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   FiHelpCircle, FiMessageSquare, FiPlus, FiClock, FiCheckCircle,
   FiAlertCircle, FiChevronRight, FiMail, FiSend, FiX,
-  FiMessageCircle, FiBarChart2, FiSearch, FiFilter, FiShield,
+  FiMessageCircle, FiBarChart2, FiSearch, FiFilter, FiShoppingBag,
 } from "react-icons/fi"
 import {
   SiDiscord, SiYoutube, SiX,
@@ -333,9 +333,8 @@ export default function SupportPage() {
               <div className="space-y-2">
                 {[
                   { label: "Order Status", icon: FiClock, href: "/orders" },
-                  { label: "Refund Policy", icon: FiAlertCircle, href: "/refund-policy" },
-                  { label: "Terms of Service", icon: FiHelpCircle, href: "/terms" },
-                  { label: "Privacy Policy", icon: FiShield, href: "/privacy" },
+                  { label: "FAQ", icon: FiHelpCircle, href: "/faq" },
+                  { label: "Marketplace", icon: FiShoppingBag, href: "/marketplace" },
                 ].map((link, i) => (
                   <Link key={i} href={link.href}>
                     <motion.div

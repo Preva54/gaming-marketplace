@@ -37,7 +37,7 @@ export default function ContactPage() {
   }
 
   const supportCards = [
-    { icon: <FiMail className="text-2xl" />, title: "Email Us", desc: "support@gamemarket.com", sub: "Response within 24h" },
+    { icon: <FiMail className="text-2xl" />, title: "Email Us", desc: "support@nexusmarket.com", sub: "Response within 24h" },
     { icon: <FiMessageCircle className="text-2xl" />, title: "Live Chat", desc: "Chat with our team", sub: "Available 24/7" },
     { icon: <FiClock className="text-2xl" />, title: "Response Time", desc: "Avg. 2 hours", sub: "During business hours" },
     { icon: <FiShield className="text-2xl" />, title: "Secure", desc: "End-to-end encrypted", sub: "Your data is safe" },

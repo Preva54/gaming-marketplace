@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
 import { FiShoppingCart, FiHeart, FiShare2, FiMinus, FiPlus, FiStar, FiChevronLeft, FiChevronRight } from "react-icons/fi"
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types"
 import { formatPrice, generateId } from "@/lib/utils"
@@ -30,6 +31,7 @@ export default function ProductPage({
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewCount, setReviewCount] = useState(0)
   const addItem = useCartStore((s) => s.addItem)
+  const router = useRouter()
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -76,7 +78,7 @@ export default function ProductPage({
       quantity,
       image: "",
     })
-    window.location.href = "/checkout"
+    router.push("/checkout")
   }
 
   const renderStars = (rating: number) => {

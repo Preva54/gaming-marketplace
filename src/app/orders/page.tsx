@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 import { FiPackage, FiChevronDown, FiSearch, FiMapPin, FiCheckCircle, FiXCircle, FiClock, FiAlertTriangle } from "react-icons/fi"
 import { formatPrice, formatDate } from "@/lib/utils"
 import type { OrderStatus } from "@/types"
@@ -68,9 +69,9 @@ export default function OrdersPage() {
           <div className="text-8xl mb-6">📦</div>
           <h2 className="text-3xl font-bold gradient-text mb-3">No Orders Yet</h2>
           <p className="text-gray-400 mb-8">Ready to start your gaming collection?</p>
-          <a href="/marketplace" className="btn-primary inline-flex items-center gap-2">
+          <Link href="/marketplace" className="btn-primary inline-flex items-center gap-2">
             Start Shopping
-          </a>
+          </Link>
         </motion.div>
       </div>
     )
@@ -199,9 +200,9 @@ export default function OrdersPage() {
                               <FiXCircle size={14} /> Cancel Order
                             </button>
                           )}
-                          <a href={`/product/${order.productId}`} className="btn-secondary !py-2 !px-4 !text-sm">
+                          <Link href={`/product/${order.productId}`} className="btn-secondary !py-2 !px-4 !text-sm">
                             View Product
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </motion.div>

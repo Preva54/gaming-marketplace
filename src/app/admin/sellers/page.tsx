@@ -62,7 +62,7 @@ export default function AdminSellersPage() {
   async function handleKycRequest(userId: string) {
     try {
       const r = await fetch(`/api/kyc`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, action: "request_additional", reason: "Additional documents required" }),
       })
       if (r.ok) toast.success("Additional KYC documents requested")

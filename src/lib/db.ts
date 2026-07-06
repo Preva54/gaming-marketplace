@@ -37,4 +37,4 @@ function initPrisma(): PrismaClient {
 
 export const prisma = globalForPrisma.prisma ?? initPrisma()
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+globalForPrisma.prisma = prisma

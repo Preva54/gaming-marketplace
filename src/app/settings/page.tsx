@@ -72,17 +72,8 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
       })
-      if (res.ok) {
-        toast.success("Profile saved!")
-      } else {
-        const fallback = await fetch("/api/profile", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(profile),
-        })
-        if (fallback.ok) toast.success("Profile saved!")
-        else toast.error("Failed to save profile")
-      }
+      if (res.ok) toast.success("Profile saved!")
+      else toast.error("Failed to save profile")
     } catch {
       toast.error("Failed to save profile")
     }

@@ -201,7 +201,7 @@ function createStore(): AppStore {
 }
 
 export const store: AppStore = globalForStore.store ?? createStore()
-if (process.env.NODE_ENV !== "production") globalForStore.store = store
+globalForStore.store = store
 
 function getWallet(userId: string): Wallet {
   let wallet = store.wallets.find((w) => w.userId === userId)

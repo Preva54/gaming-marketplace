@@ -17,4 +17,4 @@ const globalForUsers = globalThis as unknown as {
 
 export const inMemoryUsers: StoredUser[] = globalForUsers._inMemoryUsers ?? []
 
-if (process.env.NODE_ENV !== "production") globalForUsers._inMemoryUsers = inMemoryUsers
+globalForUsers._inMemoryUsers = inMemoryUsers

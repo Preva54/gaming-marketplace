@@ -9,13 +9,13 @@ type PaymentStatus = "COMPLETED" | "PENDING" | "FAILED" | "REFUNDED"
 
 interface Payment {
   id: string
-  transactionId: string
-  customer: string
-  email: string
+  type: string
   amount: number
-  method: string
+  fee: number
+  netAmount: number
+  reference: string
+  description: string
   status: PaymentStatus
-  orderId: string
   createdAt: Date
 }
 
@@ -71,9 +71,9 @@ export default function AdminPaymentsPage() {
       const q = search.toLowerCase()
       result = result.filter(
         (p) =>
-          p.transactionId.toLowerCase().includes(q) ||
-          p.customer.toLowerCase().includes(q) ||
-          p.orderId.toLowerCase().includes(q)
+          (p.reference || p.id).toLowerCase().includes(q) ||
+          (p.description || "").toLowerCase().includes(q) ||
+          (p.type || "").toLowerCase().includes(q)
       )
     }
     if (statusFilter !== "ALL") result = result.filter((p) => p.status === statusFilter)
@@ -116,7 +116,7 @@ export default function AdminPaymentsPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--foreground)]/40" size={18} />
-            <input type="text" placeholder="Search by transaction ID, customer, or order..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} className="input-field pl-12 pr-4" />
+            <input type="text" placeholder="Search by reference, type, or description..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} className="input-field pl-12 pr-4" />
           </div>
           <div className="flex gap-2 flex-wrap">
             {(["ALL", "COMPLETED", "PENDING", "FAILED", "REFUNDED"] as const).map((status) => (
@@ -140,35 +140,30 @@ export default function AdminPaymentsPage() {
             <thead>
               <tr className="border-b border-[var(--card-border)] bg-[var(--primary)]/5">
                 <th className="text-left py-3.5 px-4 text-[var(--foreground)]/60 font-medium">Transaction</th>
-                <th className="text-left py-3.5 px-4 text-[var(--foreground)]/60 font-medium">Customer</th>
+                <th className="text-left py-3.5 px-4 text-[var(--foreground)]/60 font-medium">Type</th>
                 <th className="text-left py-3.5 px-4 text-[var(--foreground)]/60 font-medium">Amount</th>
-                <th className="text-left py-3.5 px-4 text-[var(--foreground)]/60 font-medium">Method</th>
                 <th className="text-left py-3.5 px-4 text-[var(--foreground)]/60 font-medium">Status</th>
                 <th className="text-left py-3.5 px-4 text-[var(--foreground)]/60 font-medium">Date</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-12">
+                <tr><td colSpan={5} className="text-center py-12">
                   <div className="flex items-center justify-center gap-2 text-[var(--foreground)]/50">
                     <div className="w-5 h-5 border-2 border-[var(--neon-cyan)] border-t-transparent rounded-full animate-spin" />
                     <span>Loading payments...</span>
                   </div>
                 </td></tr>
               ) : paginated.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-[var(--foreground)]/40">No payments found</td></tr>
+                <tr><td colSpan={5} className="text-center py-12 text-[var(--foreground)]/40">No payments found</td></tr>
               ) : paginated.map((payment) => (
                 <tr key={payment.id} className="border-b border-[var(--card-border)]/50 hover:bg-[var(--primary)]/5 transition-colors">
                   <td className="py-3.5 px-4">
-                    <p className="font-mono text-xs text-[var(--neon-cyan)]">{payment.transactionId}</p>
-                    <p className="text-xs text-[var(--foreground)]/50">{payment.orderId}</p>
+                    <p className="font-mono text-xs text-[var(--neon-cyan)]">{payment.reference || payment.id}</p>
+                    <p className="text-xs text-[var(--foreground)]/50">{payment.description}</p>
                   </td>
-                  <td className="py-3.5 px-4">
-                    <p className="text-sm font-medium">{payment.customer}</p>
-                    <p className="text-xs text-[var(--foreground)]/50">{payment.email}</p>
-                  </td>
-                  <td className="py-3.5 px-4 font-semibold">{formatPrice(payment.amount)}</td>
-                  <td className="py-3.5 px-4 text-[var(--foreground)]/70">{payment.method}</td>
+                  <td className="py-3.5 px-4 text-[var(--foreground)]/70">{payment.type?.replace(/_/g, " ")}</td>
+                  <td className="py-3.5 px-4 font-semibold">{formatPrice(Math.abs(payment.amount))}</td>
                   <td className="py-3.5 px-4">
                     <span className={`text-xs px-2.5 py-0.5 rounded-full border flex items-center gap-1 w-fit ${statusColors[payment.status]}`}>
                       {statusIcons[payment.status]} {payment.status}

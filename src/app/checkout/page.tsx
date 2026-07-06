@@ -6,6 +6,7 @@ import { FiCreditCard, FiLock, FiCheck, FiArrowLeft, FiTag, FiDollarSign, FiShie
 import { useCartStore } from "@/store/cartStore"
 import { formatPrice } from "@/lib/utils"
 import toast from "react-hot-toast"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 type PaymentMethod = "wallet" | "credit-card" | "paypal"
@@ -88,7 +89,7 @@ export default function CheckoutPage() {
           <h2 className="text-3xl font-bold gradient-text mb-3">Order Confirmed!</h2>
           <p className="text-gray-400 mb-2">Your order has been placed. Payment is held securely in escrow.</p>
           <p className="text-sm text-gray-500 mb-8">The seller will be paid once you confirm delivery.</p>
-          <a href="/orders" className="btn-primary inline-flex items-center gap-2">View My Orders</a>
+          <Link href="/orders" className="btn-primary inline-flex items-center gap-2">View My Orders</Link>
         </motion.div>
       </div>
     )
@@ -100,7 +101,7 @@ export default function CheckoutPage() {
         <div className="text-center">
           <div className="text-6xl mb-4">🛒</div>
           <h2 className="text-2xl font-bold gradient-text mb-3">Your cart is empty</h2>
-          <a href="/marketplace" className="btn-primary inline-flex items-center gap-2"><FiArrowLeft /> Browse Products</a>
+          <Link href="/marketplace" className="btn-primary inline-flex items-center gap-2"><FiArrowLeft /> Browse Products</Link>
         </div>
       </div>
     )
@@ -129,7 +130,7 @@ export default function CheckoutPage() {
               </div>
               {paymentMethod === "wallet" && walletBalance < total && (
                 <div className="mt-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm">
-                  Insufficient balance. Please <a href="/wallet" className="underline">add funds</a>.
+                  Insufficient balance. Please <Link href="/wallet" className="underline">add funds</Link>.
                 </div>
               )}
             </motion.div>
