@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       if (search) where.OR = [{ name: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }]
       if (roleFilter) where.role = roleFilter
 
-      const [users, total] = await Promise.all([
+      const [dbUsers, dbTotal] = await Promise.all([
         prisma.user.findMany({
           where, skip, take: limit,
           orderBy: { createdAt: "desc" },
@@ -43,21 +43,30 @@ export async function GET(request: NextRequest) {
         }),
         prisma.user.count({ where }),
       ])
-      if (users.length === 0 && inMemoryUsers.length > 0) {
-        let memUsers = inMemoryUsers.map((u: any) => ({
-          id: u.id, name: u.name, email: u.email, role: u.role,
-          wallet: 0, verificationStatus: u.verificationStatus || "UNVERIFIED",
-          twoFactorEnabled: u.twoFactorEnabled || false,
-          suspended: u.suspended || false, suspensionReason: u.suspensionReason || null,
-          createdAt: u.createdAt || new Date(),
-        }))
-        if (search) memUsers = memUsers.filter((u: any) => (u.name || "").toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
-        if (roleFilter) memUsers = memUsers.filter((u: any) => u.role === roleFilter)
-        const memTotal = memUsers.length
-        memUsers = memUsers.slice(skip, skip + limit)
-        return NextResponse.json({ users: memUsers, total: memTotal, page, totalPages: Math.ceil(memTotal / limit) })
+
+      let allUsers = [...dbUsers]
+      const dbUserIds = new Set(dbUsers.map((u: any) => u.id))
+      if (inMemoryUsers.length > 0) {
+        for (const mu of inMemoryUsers) {
+          if (!dbUserIds.has(mu.id)) {
+            const m = mu as any
+            allUsers.push({
+              id: m.id, name: m.name, email: m.email, role: m.role,
+              wallet: 0, verificationStatus: m.verificationStatus || "UNVERIFIED",
+              twoFactorEnabled: m.twoFactorEnabled || false,
+              suspended: m.suspended || false, suspensionReason: m.suspensionReason || null,
+              createdAt: m.createdAt || new Date(),
+            })
+          }
+        }
+        allUsers.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       }
-      return NextResponse.json({ users, total, page, totalPages: Math.ceil(total / limit) })
+
+      if (search) allUsers = allUsers.filter((u: any) => (u.name || "").toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
+      if (roleFilter) allUsers = allUsers.filter((u: any) => u.role === roleFilter)
+      const total = allUsers.length
+      allUsers = allUsers.slice(skip, skip + limit)
+      return NextResponse.json({ users: allUsers, total, page, totalPages: Math.ceil(total / limit) })
     } catch {
       let users = inMemoryUsers.map((u: any) => ({
         id: u.id, name: u.name, email: u.email, role: u.role,

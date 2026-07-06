@@ -22,6 +22,15 @@ export async function POST(req: Request) {
         data: { name, email, password: hashedPassword, role: role || "CUSTOMER" },
       })
 
+      inMemoryUsers.push({
+        id: user.id,
+        name: user.name || "",
+        email: user.email,
+        password: hashedPassword,
+        role: user.role as string,
+        createdAt: new Date(),
+      })
+
       return NextResponse.json({ id: user.id, email: user.email, name: user.name, role: user.role })
     } catch {
       const existing = inMemoryUsers.find((u) => u.email === email)
