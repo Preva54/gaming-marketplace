@@ -74,7 +74,15 @@ export default function AdminAnalyticsPage() {
           <h1 className="text-3xl font-bold gradient-text">Analytics</h1>
           <p className="text-[var(--foreground)]/60 mt-1">Deep insights into your marketplace performance</p>
         </div>
-        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-primary flex items-center gap-2 text-sm">
+        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url; a.download = `analytics-${new Date().toISOString().split("T")[0]}.json`
+            a.click(); URL.revokeObjectURL(url)
+          }}
+          className="btn-primary flex items-center gap-2 text-sm">
           <FiDownload size={16} /> Export Data
         </motion.button>
       </motion.div>

@@ -124,15 +124,6 @@ export default function Home() {
                   Explore Marketplace
                 </motion.button>
               </Link>
-              <Link href="/seller">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="btn-secondary text-lg px-8 py-4 bg-black/50 backdrop-blur-md"
-                >
-                  Start Selling
-                </motion.button>
-              </Link>
             </motion.div>
           </motion.div>
         </div>
