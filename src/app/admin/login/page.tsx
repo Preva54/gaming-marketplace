@@ -20,10 +20,9 @@ export default function AdminLoginPage() {
       const result = await signIn("credentials", { email: form.email, password: form.password, redirect: false })
       if (result?.error) { toast.error("Invalid credentials"); return }
       const r = await fetch("/api/users?current=true")
-      if (r.ok) {
-        const user = await r.json()
-        if (user.role !== "ADMIN") { toast.error("Access denied. Admins only."); return }
-      }
+      if (!r.ok) { toast.error("Session error — please try again"); return }
+      const user = await r.json()
+      if (user.role !== "ADMIN") { toast.error("Access denied. Admins only."); return }
       toast.success("Welcome, Admin!")
       router.push("/admin")
       router.refresh()

@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client"
 import { PrismaMariaDb } from "@prisma/adapter-mariadb"
+import { seedMockData } from "./mock-data"
+try { seedMockData() } catch {}
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
