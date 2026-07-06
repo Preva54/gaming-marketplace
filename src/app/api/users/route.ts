@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { hash } from "bcryptjs"
 import { inMemoryUsers } from "@/lib/user-store"
 
 export async function GET(request: NextRequest) {
@@ -100,8 +101,17 @@ export async function POST(request: NextRequest) {
     try {
       const existing = await prisma.user.findUnique({ where: { email } })
       if (existing) return NextResponse.json({ error: "Email already registered" }, { status: 409 })
+      const hashedPassword = await hash(password, 12)
       const user = await prisma.user.create({
-        data: { name, email, password, role: newRole || "CUSTOMER" },
+        data: { name, email, password: hashedPassword, role: newRole || "CUSTOMER" },
+      })
+      inMemoryUsers.push({
+        id: user.id,
+        name: user.name || "",
+        email: user.email,
+        password: hashedPassword,
+        role: user.role as string,
+        createdAt: new Date(),
       })
       return NextResponse.json({ id: user.id, email: user.email, name: user.name, role: user.role }, { status: 201 })
     } catch {

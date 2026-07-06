@@ -36,23 +36,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
+        const email = credentials.email as string
+        const password = credentials.password as string
+
+        let dbUser: any = null
         try {
           const { prisma } = await import("./db")
-          const user = await prisma.user.findUnique({
-            where: { email: credentials.email as string },
-          })
-          if (user && user.password && await compare(credentials.password as string, user.password)) {
-            return { id: user.id, email: user.email, name: user.name, role: user.role, image: user.avatar }
+          dbUser = await prisma.user.findUnique({ where: { email } })
+          if (dbUser && dbUser.password) {
+            const ok = await compare(password, dbUser.password).catch(() => false)
+            if (ok) return { id: dbUser.id, email: dbUser.email, name: dbUser.name, role: dbUser.role, image: dbUser.avatar }
           }
         } catch {}
 
-        try {
-          const stored = inMemoryUsers.find((u: any) => u.email === credentials.email)
-          if (!stored) return null
-          if (await compare(credentials.password as string, stored.password)) {
-            return { id: stored.id, email: stored.email, name: stored.name, role: stored.role, image: null }
-          }
-        } catch {}
+        const stored = inMemoryUsers.find((u: any) => u.email === email)
+        if (stored) {
+          const ok = await compare(password, stored.password).catch(() => false)
+          if (ok) return { id: stored.id, email: stored.email, name: stored.name, role: stored.role, image: null }
+        }
+
+        if (dbUser && !dbUser.password) {
+          try {
+            const { hash } = await import("bcryptjs")
+            const { prisma } = await import("./db")
+            const hashed = await hash(password, 12)
+            await prisma.user.update({ where: { email }, data: { password: hashed } })
+            inMemoryUsers.push({ id: dbUser.id, name: dbUser.name || "", email: dbUser.email, password: hashed, role: dbUser.role as string, createdAt: new Date() })
+            return { id: dbUser.id, email: dbUser.email, name: dbUser.name, role: dbUser.role, image: dbUser.avatar }
+          } catch {}
+        }
 
         return null
       },
