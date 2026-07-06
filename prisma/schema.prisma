@@ -1,0 +1,502 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  CUSTOMER
+  SELLER
+  ADMIN
+}
+
+enum ProductCategory {
+  GAMING_ACCOUNTS
+  GIFT_CARDS
+  GAME_KEYS
+  IN_GAME_CURRENCY
+  TOP_UPS
+  BOOSTING_SERVICES
+  COACHING_SERVICES
+  DIGITAL_PRODUCTS
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_SECURED
+  AWAITING_SELLER_DELIVERY
+  DELIVERED
+  BUYER_REVIEWING
+  COMPLETED
+  FUNDS_RELEASED
+  CANCELLED
+  REFUND_REQUESTED
+  REFUNDED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum KycStatus {
+  NOT_STARTED
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
+  DISPUTED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED_BUYER
+  RESOLVED_SELLER
+  CLOSED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum WalletTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PURCHASE
+  REFUND
+  COMMISSION
+  ESCROW_HOLD
+  ESCROW_RELEASE
+  ESCROW_REFUND
+  PROMOTIONAL_CREDIT
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String?
+  email          String   @unique
+  password       String?
+  role           Role     @default(CUSTOMER)
+  wallet         Float    @default(0)
+  avatar         String?
+  verificationStatus String @default("UNVERIFIED")
+  emailVerified  DateTime?
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?
+  image         String?
+  phone         String?
+  suspended     Boolean  @default(false)
+  suspensionReason String?
+  promotionalCredits Float @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  products     Product[]
+  orders       Order[]
+  reviews      Review[]
+  notifications Notification[]
+  wishlist     Wishlist[]
+  sentMessages Message[]  @relation("sender")
+  receivedMessages Message[] @relation("receiver")
+  kyc          KycApplication?
+  sellerProfile SellerProfile?
+  walletAccount Wallet?
+  withdrawalRequests WithdrawalRequest[]
+  disputes     Dispute[]  @relation("raisedByUser")
+  disputesResolved Dispute[] @relation("resolvedByUser")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  category    ProductCategory
+  name        String
+  description String          @db.Text
+  price       Float
+  images      Json
+  videos      Json?
+  sellerId    String
+  seller      User            @relation(fields: [sellerId], references: [id])
+  availability Boolean         @default(true)
+  stock       Int             @default(1)
+  featured    Boolean         @default(false)
+  isDraft     Boolean         @default(false)
+  deliveryMethod String        @default("DIGITAL_DELIVERY")
+  deliveryTime String?
+  discount    Float?
+  discountEndsAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  orders    Order[]
+  reviews   Review[]
+  wishlists Wishlist[]
+
+  @@map("products")
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  customerId    String
+  customer      User          @relation(fields: [customerId], references: [id])
+  productId     String
+  product       Product       @relation(fields: [productId], references: [id])
+  sellerId      String
+  quantity      Int           @default(1)
+  totalPrice    Float
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String?
+  promoCode     String?
+  deliveryInfo  String?       @db.Text
+  deliveredAt   DateTime?
+  confirmedAt   DateTime?
+  refundReason  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  escrow      EscrowTransaction?
+  dispute     Dispute?
+
+  @@map("orders")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("sender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("receiver", fields: [receiverId], references: [id])
+  content    String   @db.Text
+  attachments Json
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("messages")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  review    String   @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+model Notification {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id])
+  message String
+  read    Boolean  @default(false)
+  type    String   @default("INFO")
+  metadata Json?
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("wishlists")
+}
+
+model Coupon {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  discount   Float
+  type       String   @default("PERCENTAGE")
+  maxUses    Int?
+  usedCount  Int      @default(0)
+  expiresAt  DateTime?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@map("coupons")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  transactionId String        @unique
+  amount        Float
+  method        String
+  status        PaymentStatus @default(PENDING)
+  receipt       String?
+  orderId       String
+  createdAt     DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  subject   String
+  message   String   @db.Text
+  status    String   @default("OPEN")
+  priority  String   @default("MEDIUM")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("support_tickets")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?  @db.Text
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@map("activity_logs")
+}
+
+model KycApplication {
+  id              String     @id @default(cuid())
+  userId          String     @unique
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents       KycDocument[]
+  status          KycStatus  @default(NOT_STARTED)
+  rejectionReason String?
+  additionalDocsRequested Boolean @default(false)
+  additionalDocsReason String?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@map("kyc_applications")
+}
+
+model KycDocument {
+  id        String   @id @default(cuid())
+  kycId     String
+  kyc       KycApplication @relation(fields: [kycId], references: [id], onDelete: Cascade)
+  type      String
+  fileUrl   String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("kyc_documents")
+}
+
+model Wallet {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availableBalance      Float    @default(0)
+  pendingEscrowBalance  Float    @default(0)
+  pendingWithdrawalBalance Float @default(0)
+  lifetimeEarnings      Float    @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id          String               @id @default(cuid())
+  walletId    String
+  wallet      Wallet               @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type        WalletTransactionType
+  amount      Float
+  fee         Float                @default(0)
+  netAmount   Float
+  reference   String
+  status      String               @default("COMPLETED")
+  description String
+  createdAt   DateTime             @default(now())
+
+  @@map("wallet_transactions")
+}
+
+model WithdrawalRequest {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  amount            Float
+  method            String
+  accountDetails    String
+  status            WithdrawalStatus @default(PENDING)
+  rejectionReason   String?
+  estimatedPayoutDate DateTime?
+  processedAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("withdrawal_requests")
+}
+
+model EscrowTransaction {
+  id                String       @id @default(cuid())
+  orderId           String       @unique
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  buyerId           String
+  sellerId          String
+  amount            Float
+  commission        Float        @default(0)
+  commissionRate    Float        @default(0.05)
+  sellerAmount      Float
+  status            EscrowStatus @default(HELD)
+  confirmationPeriod Int         @default(3)
+  autoCompleteAt    DateTime?
+  createdAt         DateTime     @default(now())
+  completedAt       DateTime?
+
+  @@map("escrow_transactions")
+}
+
+model Dispute {
+  id          String        @id @default(cuid())
+  orderId     String        @unique
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  escrowId    String
+  raisedBy    String
+  raiser      User          @relation("raisedByUser", fields: [raisedBy], references: [id])
+  reason      String
+  description String        @db.Text
+  evidence    Json
+  status      DisputeStatus @default(OPEN)
+  resolvedBy  String?
+  resolver    User?         @relation("resolvedByUser", fields: [resolvedBy], references: [id])
+  resolution  String?       @db.Text
+  sellerEvidence String?    @db.Text
+  createdAt   DateTime      @default(now())
+  resolvedAt  DateTime?
+  updatedAt   DateTime      @updatedAt
+
+  @@map("disputes")
+}
+
+model SellerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName       String
+  storeDescription String  @default("")
+  bannerImage     String?
+  avatar          String?
+  rating          Float    @default(0)
+  reviewCount     Int      @default(0)
+  totalSales      Int      @default(0)
+  totalEarnings   Float    @default(0)
+  verified        Boolean  @default(false)
+  kycStatus       KycStatus @default(NOT_STARTED)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("seller_profiles")
+}
+
+model CommissionConfig {
+  id                String   @id @default(cuid())
+  type              String   @default("PERCENTAGE")
+  rate              Float    @default(0.05)
+  fixedFee          Float    @default(0)
+  category          String?
+  minFee            Float?
+  maxFee            Float?
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("commission_configs")
+}
+
+model SavedPaymentMethod {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  label     String
+  details   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("saved_payment_methods")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?  @db.Text
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
