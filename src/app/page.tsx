@@ -2,8 +2,6 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import Hero3D from "@/components/3d/Hero3D"
-import ParticleField from "@/components/3d/ParticleField"
 import CategoryCard from "@/components/ui/CategoryCard"
 import ProductCard from "@/components/ui/ProductCard"
 import { FiUsers, FiPackage, FiTrendingUp, FiArrowRight, FiChevronLeft, FiChevronRight, FiStar } from "react-icons/fi"
@@ -11,6 +9,7 @@ import { useState, useEffect } from "react"
 import toast from "react-hot-toast"
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types"
 import type { ProductCategory } from "@/types"
+import ScrollAnimation from "@/components/ui/ScrollAnimation"
 
 
 
@@ -79,13 +78,8 @@ export default function Home() {
 
   return (
     <div className="relative">
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <Hero3D />
-        <ParticleField />
-
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[var(--background)] z-[1]" />
-
-        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+      <ScrollAnimation>
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center w-full">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -100,7 +94,7 @@ export default function Home() {
               The Future of Gaming Commerce
             </motion.span>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 drop-shadow-2xl">
               <span className="gradient-text">The Ultimate</span>
               <br />
               <span className="text-white">Gaming Marketplace</span>
@@ -110,7 +104,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-lg md:text-xl text-[var(--foreground)]/70 max-w-2xl mx-auto mb-10"
+              className="text-lg md:text-xl text-[var(--foreground)]/70 max-w-2xl mx-auto mb-10 drop-shadow-md"
             >
               Buy and sell gaming accounts, gift cards, game keys, in-game currency, and digital products with complete security.
             </motion.p>
@@ -134,7 +128,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="btn-secondary text-lg px-8 py-4"
+                  className="btn-secondary text-lg px-8 py-4 bg-black/50 backdrop-blur-md"
                 >
                   Start Selling
                 </motion.button>
@@ -142,7 +136,7 @@ export default function Home() {
             </motion.div>
           </motion.div>
         </div>
-      </section>
+      </ScrollAnimation>
 
       <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
