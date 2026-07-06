@@ -21,6 +21,12 @@ export async function GET(req: Request) {
         orderBy: { createdAt: "desc" },
         include: { seller: { select: { id: true, name: true, avatar: true } } },
       })
+      if (products.length === 0 && (globalForProds._products?.length || 0) > 0) {
+        const memProds = (globalForProds._products || [])
+          .filter((p: any) => p.sellerId === sellerId)
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        return NextResponse.json(memProds)
+      }
       return NextResponse.json(products)
     } catch {
       const products = (globalForProds._products || [])

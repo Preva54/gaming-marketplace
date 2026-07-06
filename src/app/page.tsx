@@ -7,96 +7,12 @@ import ParticleField from "@/components/3d/ParticleField"
 import CategoryCard from "@/components/ui/CategoryCard"
 import ProductCard from "@/components/ui/ProductCard"
 import { FiUsers, FiPackage, FiTrendingUp, FiArrowRight, FiChevronLeft, FiChevronRight, FiStar } from "react-icons/fi"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import toast from "react-hot-toast"
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types"
+import type { ProductCategory } from "@/types"
 
-const COUNT_MAP: Record<string, number> = {
-  GAMING_ACCOUNTS: 243,
-  GIFT_CARDS: 1892,
-  GAME_KEYS: 567,
-  IN_GAME_CURRENCY: 89,
-  TOP_UPS: 156,
-  BOOSTING_SERVICES: 73,
-  COACHING_SERVICES: 42,
-  DIGITAL_PRODUCTS: 315,
-}
 
-const categories = Object.entries(CATEGORY_LABELS).map(([id, name]) => ({
-  id,
-  name,
-  icon: CATEGORY_ICONS[id as keyof typeof CATEGORY_ICONS],
-  count: COUNT_MAP[id] ?? 0,
-}))
-
-const featuredProducts = [
-  {
-    id: "1",
-    name: "God of War Ragnarök - PS5 Account",
-    price: 49.99,
-    images: ["https://placehold.co/400x400/7c3aed/white?text=God+of+War"],
-    category: "GAMING_ACCOUNTS",
-    rating: 4.8,
-    reviews: 234,
-    seller: { name: "GameKing" },
-  },
-  {
-    id: "2",
-    name: "1000 V-Bucks Gift Card",
-    price: 9.99,
-    images: ["https://placehold.co/400x400/7c3aed/white?text=V-Bucks"],
-    category: "GIFT_CARDS",
-    rating: 4.6,
-    reviews: 1892,
-    seller: { name: "CardMaster" },
-  },
-  {
-    id: "3",
-    name: "Elden Ring Shadow of the Erdtree Key",
-    price: 39.99,
-    images: ["https://placehold.co/400x400/7c3aed/white?text=Elden+Ring"],
-    category: "GAME_KEYS",
-    rating: 4.9,
-    reviews: 567,
-    seller: { name: "KeyHaven" },
-  },
-  {
-    id: "4",
-    name: "FIFA 25 Ultimate Team Coins",
-    price: 14.99,
-    images: ["https://placehold.co/400x400/7c3aed/white?text=FIFA+25"],
-    category: "IN_GAME_CURRENCY",
-    rating: 4.4,
-    reviews: 3456,
-    seller: { name: "CoinExpress" },
-  },
-  {
-    id: "5",
-    name: "Call of Duty: MW3 Rank Boost",
-    price: 24.99,
-    images: ["https://placehold.co/400x400/7c3aed/white?text=COD+MW3"],
-    category: "BOOSTING_SERVICES",
-    rating: 4.7,
-    reviews: 891,
-    seller: { name: "BoostPro" },
-  },
-  {
-    id: "6",
-    name: "Steam Wallet Code $50",
-    price: 50.00,
-    images: ["https://placehold.co/400x400/7c3aed/white?text=Steam+$50"],
-    category: "GIFT_CARDS",
-    rating: 4.5,
-    reviews: 4567,
-    seller: { name: "DigitalGifts" },
-  },
-]
-
-const stats = [
-  { icon: FiUsers, label: "Active Users", value: "50K+", suffix: "gamers" },
-  { icon: FiPackage, label: "Products Listed", value: "100K+", suffix: "items" },
-  { icon: FiTrendingUp, label: "Transactions", value: "$10M+", suffix: "processed" },
-]
 
 const testimonials = [
   {
@@ -126,8 +42,37 @@ const testimonials = [
 ]
 
 export default function Home() {
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
+  const [siteStats, setSiteStats] = useState<any>(null)
   const [testimonialIndex, setTestimonialIndex] = useState(0)
   const [email, setEmail] = useState("")
+
+  useEffect(() => {
+    fetch("/api/products?limit=6")
+      .then(r => r.ok ? r.json() : { products: [] })
+      .then(data => setFeaturedProducts(data.products || []))
+      .catch(() => {})
+
+    fetch("/api/products?limit=1000")
+      .then(r => r.ok ? r.json() : { products: [], total: 0 })
+      .then(data => {
+        const products = data.products || []
+        const counts: Record<string, number> = {}
+        for (const cat of Object.keys(CATEGORY_LABELS)) counts[cat] = 0
+        for (const p of products) {
+          const cat = p.category as string
+          if (counts[cat] !== undefined) counts[cat]++
+        }
+        setCategoryCounts(counts)
+      })
+      .catch(() => {})
+
+    fetch("/api/analytics")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setSiteStats(data))
+      .catch(() => {})
+  }, [])
 
   const nextTestimonial = () => setTestimonialIndex((i) => (i + 1) % testimonials.length)
   const prevTestimonial = () => setTestimonialIndex((i) => (i - 1 + testimonials.length) % testimonials.length)
@@ -216,15 +161,15 @@ export default function Home() {
           </motion.div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {categories.slice(0, 8).map((cat, i) => (
+            {Object.entries(CATEGORY_LABELS).slice(0, 8).map(([id, name], i) => (
               <motion.div
-                key={cat.id}
+                key={id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
               >
-                <CategoryCard {...cat} />
+                <CategoryCard id={id} name={name} icon={CATEGORY_ICONS[id as keyof typeof CATEGORY_ICONS]} count={categoryCounts[id] ?? 0} />
               </motion.div>
             ))}
           </div>
@@ -276,7 +221,11 @@ export default function Home() {
       <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {stats.map((stat, i) => (
+            {[
+              { icon: FiUsers, label: "Active Users", value: siteStats?.totalUsers?.toLocaleString() + "+" || "50K+", suffix: "gamers" },
+              { icon: FiPackage, label: "Products Listed", value: featuredProducts.length > 0 ? (featuredProducts.length * 100).toLocaleString() + "+" : "100K+", suffix: "items" },
+              { icon: FiTrendingUp, label: "Transactions", value: "$" + (siteStats?.totalRevenue?.toLocaleString() || "10M") + "+", suffix: "processed" },
+            ].map((stat, i) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 30 }}

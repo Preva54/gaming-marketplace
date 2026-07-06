@@ -1,19 +1,9 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types"
 import type { ProductCategory } from "@/types"
-
-const ITEM_COUNTS: Record<ProductCategory, number> = {
-  GAMING_ACCOUNTS: 156,
-  GIFT_CARDS: 243,
-  GAME_KEYS: 189,
-  IN_GAME_CURRENCY: 312,
-  TOP_UPS: 98,
-  BOOSTING_SERVICES: 67,
-  COACHING_SERVICES: 45,
-  DIGITAL_PRODUCTS: 178,
-}
 
 const DESCRIPTIONS: Record<ProductCategory, string> = {
   GAMING_ACCOUNTS: "Buy and sell verified gaming accounts with rare ranks and skins",
@@ -29,6 +19,28 @@ const DESCRIPTIONS: Record<ProductCategory, string> = {
 const categoryEntries = Object.entries(CATEGORY_LABELS) as [ProductCategory, string][]
 
 export default function CategoriesPage() {
+  const [itemCounts, setItemCounts] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/products?limit=1000")
+      .then(r => r.ok ? r.json() : { products: [] })
+      .then(data => {
+        const products = data.products || []
+        const counts: Record<string, number> = {}
+        for (const cat of Object.keys(CATEGORY_LABELS)) counts[cat] = 0
+        for (const p of products) {
+          const cat = p.category as string
+          if (counts[cat] !== undefined) counts[cat]++
+        }
+        setItemCounts(counts)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="w-8 h-8 border-2 border-[var(--neon-cyan)] border-t-transparent rounded-full animate-spin" /></div>
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -75,7 +87,7 @@ export default function CategoriesPage() {
                 {DESCRIPTIONS[key]}
               </p>
               <span className="inline-flex items-center gap-1 text-xs text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">
-                {ITEM_COUNTS[key]} items
+                {itemCounts[key] ?? 0} items
               </span>
             </motion.a>
           ))}

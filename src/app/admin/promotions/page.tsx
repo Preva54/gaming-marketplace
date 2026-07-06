@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { FiGift, FiPlus, FiX, FiCheck, FiCopy, FiToggleLeft, FiToggleRight, FiTrash2, FiSearch, FiCalendar } from "react-icons/fi"
 import { formatDate, generateId } from "@/lib/utils"
+import toast from "react-hot-toast"
 
 interface Coupon {
   id: string
@@ -15,13 +16,7 @@ interface Coupon {
   active: boolean
 }
 
-const initialCoupons: Coupon[] = [
-  { id: "c1", code: "WELCOME20", discount: 20, maxUses: 100, usedCount: 45, expiresAt: new Date("2026-08-01"), active: true },
-  { id: "c2", code: "SUMMER10", discount: 10, maxUses: 200, usedCount: 78, expiresAt: new Date("2026-07-15"), active: true },
-  { id: "c3", code: "VIP50", discount: 50, maxUses: 10, usedCount: 3, expiresAt: new Date("2026-09-01"), active: true },
-  { id: "c4", code: "FLASH25", discount: 25, maxUses: 50, usedCount: 50, expiresAt: new Date("2026-06-01"), active: false },
-  { id: "c5", code: "NEWUSER15", discount: 15, maxUses: 500, usedCount: 234, expiresAt: new Date("2026-12-31"), active: true },
-]
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -34,7 +29,8 @@ const itemVariants = {
 }
 
 export default function AdminPromotionsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>(initialCoupons)
+  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -43,6 +39,23 @@ export default function AdminPromotionsPage() {
     maxUses: "",
     expiresAt: "",
   })
+
+  useEffect(() => {
+    fetchCoupons()
+  }, [])
+
+  const fetchCoupons = async () => {
+    try {
+      const res = await fetch("/api/coupons")
+      const data = await res.json()
+      const items = (Array.isArray(data) ? data : []).map((c: any) => ({
+        ...c,
+        expiresAt: c.expiresAt ? new Date(c.expiresAt) : null,
+      }))
+      setCoupons(items)
+    } catch { setCoupons([]) }
+    finally { setLoading(false) }
+  }
 
   const filtered = useMemo(
     () => coupons.filter((c) => c.code.toLowerCase().includes(search.toLowerCase())),
@@ -54,29 +67,36 @@ export default function AdminPromotionsPage() {
     setShowForm(false)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.code || !formData.discount) return
-
-    const newCoupon: Coupon = {
-      id: generateId(),
-      code: formData.code.toUpperCase(),
-      discount: Number(formData.discount),
-      maxUses: formData.maxUses ? Number(formData.maxUses) : null,
-      usedCount: 0,
-      expiresAt: formData.expiresAt ? new Date(formData.expiresAt) : null,
-      active: true,
-    }
-    setCoupons((prev) => [newCoupon, ...prev])
-    resetForm()
+    try {
+      const res = await fetch("/api/coupons", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: formData.code.toUpperCase(), discount: Number(formData.discount), maxUses: formData.maxUses || null, expiresAt: formData.expiresAt || null }) })
+      if (!res.ok) { const err = await res.json(); toast.error(err.error || "Failed to create coupon"); return }
+      toast.success("Coupon created!")
+      resetForm()
+      fetchCoupons()
+    } catch { toast.error("Failed to create coupon") }
   }
 
-  const toggleActive = (id: string) => {
-    setCoupons((prev) => prev.map((c) => (c.id === id ? { ...c, active: !c.active } : c)))
+  const toggleActive = async (id: string) => {
+    const coupon = coupons.find((c) => c.id === id)
+    if (!coupon) return
+    try {
+      const res = await fetch(`/api/coupons/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ active: !coupon.active }) })
+      if (!res.ok) throw new Error()
+      setCoupons((prev) => prev.map((c) => (c.id === id ? { ...c, active: !c.active } : c)))
+      toast.success("Coupon status updated")
+    } catch { toast.error("Failed to update coupon") }
   }
 
-  const handleDelete = (id: string) => {
-    setCoupons((prev) => prev.filter((c) => c.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/coupons/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
+      setCoupons((prev) => prev.filter((c) => c.id !== id))
+      toast.success("Coupon deleted")
+    } catch { toast.error("Failed to delete coupon") }
   }
 
   const handleCopy = (code: string) => {
@@ -153,7 +173,16 @@ export default function AdminPromotionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((coupon) => {
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-12">
+                  <div className="flex items-center justify-center gap-2 text-[var(--foreground)]/50">
+                    <div className="w-5 h-5 border-2 border-[var(--neon-cyan)] border-t-transparent rounded-full animate-spin" />
+                    <span>Loading coupons...</span>
+                  </div>
+                </td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-12 text-[var(--foreground)]/40">No coupons found</td></tr>
+              ) : filtered.map((coupon) => {
                 const isExpired = coupon.expiresAt && new Date(coupon.expiresAt) < new Date()
                 const isMaxed = coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses
                 return (

@@ -1,10 +1,29 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { compare } from "bcryptjs"
+import { compare, hashSync } from "bcryptjs"
 import { inMemoryUsers } from "./user-store"
 import { seedMockData } from "./mock-data"
 
 try { seedMockData() } catch {}
+
+;(async () => {
+  try {
+    const { prisma } = await import("./db")
+    const userCount = await prisma.user.count().catch(() => 0)
+    if (userCount === 0) {
+      const hashedPw = hashSync("password123", 12)
+      const now = new Date()
+      await prisma.user.createMany({
+        data: [
+          { id: "admin_1", name: "Admin", email: "admin@nexus.com", password: hashedPw, role: "ADMIN", verificationStatus: "VERIFIED", createdAt: now },
+          { id: "buyer_1", name: "John Doe", email: "buyer@nexus.com", password: hashedPw, role: "CUSTOMER", verificationStatus: "VERIFIED", createdAt: now },
+          { id: "seller_1", name: "GameKing", email: "seller@nexus.com", password: hashedPw, role: "SELLER", verificationStatus: "VERIFIED", createdAt: now },
+        ],
+        skipDuplicates: true,
+      })
+    }
+  } catch {}
+})()
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [

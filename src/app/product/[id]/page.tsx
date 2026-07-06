@@ -27,6 +27,8 @@ export default function ProductPage({
   const [currentImage, setCurrentImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewCount, setReviewCount] = useState(0)
   const addItem = useCartStore((s) => s.addItem)
 
   useEffect(() => {
@@ -35,14 +37,25 @@ export default function ProductPage({
         .then((r) => r.ok ? r.json() : Promise.reject())
         .then(setProduct)
         .catch(() => setProduct(null))
-        .finally(() => setLoading(false))
+
+      fetch(`/api/reviews?productId=${id}`)
+        .then(r => r.ok ? r.json() : { reviews: [] })
+        .then(data => {
+          const reviews = data.reviews || []
+          setReviewCount(reviews.length)
+          if (reviews.length > 0) {
+            const avg = reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length
+            setReviewRating(avg)
+          }
+        })
+        .catch(() => {})
+
+      setLoading(false)
     })
   }, [params])
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="w-8 h-8 border-2 border-[var(--neon-cyan)] border-t-transparent rounded-full animate-spin" /></div>
   if (!product) return <div className="flex items-center justify-center min-h-[60vh]"><div className="text-center"><h2 className="text-2xl font-bold">Product not found</h2><p className="text-gray-400 mt-2">This product doesn't exist or has been removed.</p></div></div>
-
-  const reviewRating = 4.2
 
   const handleAddToCart = () => {
     addItem({
@@ -116,7 +129,7 @@ export default function ProductPage({
               <div className="flex items-center gap-1 text-lg">
                 {renderStars(reviewRating)}
               </div>
-              <span className="text-gray-400 text-sm">(0 reviews)</span>
+              <span className="text-gray-400 text-sm">({reviewCount} {reviewCount === 1 ? "review" : "reviews"})</span>
             </div>
 
             <p className="text-gray-400 leading-relaxed">{product.description}</p>

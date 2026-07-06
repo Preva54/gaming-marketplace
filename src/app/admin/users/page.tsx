@@ -39,6 +39,8 @@ export default function AdminUsersPage() {
       if (r.ok) {
         const d = await r.json()
         setUsers(Array.isArray(d.users) ? d.users : Array.isArray(d) ? d : [])
+      } else if (r.status === 403) {
+        setUsers([])
       }
     } catch {}
     setLoading(false)

@@ -19,12 +19,22 @@ export default function CartPage() {
   const shipping = subtotal > 100 ? 0 : 9.99
   const total = subtotal - discount + shipping
 
-  const handleApplyPromo = () => {
-    if (promoCode.trim().toUpperCase() === "GAMER10") {
-      setPromoApplied(true)
-      toast.success("Promo code applied! 10% off!")
-    } else {
-      toast.error("Invalid promo code")
+  const handleApplyPromo = async () => {
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode }),
+      })
+      if (res.ok) {
+        setPromoApplied(true)
+        toast.success("Promo code applied! 10% off!")
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Invalid promo code")
+      }
+    } catch {
+      toast.error("Failed to validate promo code")
     }
   }
 

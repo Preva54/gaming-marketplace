@@ -26,6 +26,17 @@ export async function GET(request: NextRequest) {
         prisma.product.findMany({ where, orderBy, skip, take: limit, include: { seller: { select: { id: true, name: true, avatar: true } } } }),
         prisma.product.count({ where }),
       ])
+      if (products.length === 0 && (globalForProds._products?.length || 0) > 0) {
+        let memProds = globalForProds._products || []
+        if (search) memProds = memProds.filter((p: any) => p.name?.toLowerCase().includes(search.toLowerCase()))
+        if (category) memProds = memProds.filter((p: any) => p.category === category)
+        if (sort === "price_asc") memProds.sort((a: any, b: any) => a.price - b.price)
+        else if (sort === "price_desc") memProds.sort((a: any, b: any) => b.price - a.price)
+        else memProds.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        const memTotal = memProds.length
+        memProds = memProds.slice(skip, skip + limit)
+        return NextResponse.json({ products: memProds, total: memTotal, page, totalPages: Math.ceil(memTotal / limit) })
+      }
       return NextResponse.json({ products, total, page, totalPages: Math.ceil(total / limit) })
     } catch {
       let products = globalForProds._products || []

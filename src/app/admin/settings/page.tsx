@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { FiSettings, FiGlobe, FiMail, FiShield, FiDollarSign, FiPercent, FiSave, FiRefreshCw } from "react-icons/fi"
 import toast from "react-hot-toast"
@@ -16,6 +16,8 @@ const itemVariants = {
 }
 
 export default function AdminSettingsPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [general, setGeneral] = useState({
     siteName: "Nexus Market",
     description: "The Ultimate Gaming Marketplace",
@@ -30,8 +32,26 @@ export default function AdminSettingsPage() {
     sellerVerification: true,
   })
 
-  const handleSave = (section: string) => {
-    toast.success(`${section} settings saved!`)
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch("/api/admin/settings")
+        if (res.ok) {
+          const data = await res.json()
+          setGeneral((prev) => ({ ...prev, ...data }))
+        }
+      } catch {} finally { setLoading(false) }
+    })()
+  }, [])
+
+  const handleSave = async (section: string) => {
+    setSaving(true)
+    try {
+      const res = await fetch("/api/admin/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(general) })
+      if (!res.ok) throw new Error()
+      toast.success(`${section} settings saved!`)
+    } catch { toast.error(`Failed to save ${section} settings`) }
+    finally { setSaving(false) }
   }
 
   return (
@@ -71,8 +91,8 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSave("General")} className="btn-primary flex items-center gap-2 text-sm">
-            <FiSave size={16} /> Save Changes
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSave("General")} disabled={saving} className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50">
+            <FiSave size={16} /> {saving ? "Saving..." : "Save Changes"}
           </motion.button>
         </div>
       </motion.div>
@@ -120,8 +140,8 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSave("Pricing")} className="btn-primary flex items-center gap-2 text-sm">
-            <FiSave size={16} /> Save Changes
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSave("Pricing")} disabled={saving} className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50">
+            <FiSave size={16} /> {saving ? "Saving..." : "Save Changes"}
           </motion.button>
         </div>
       </motion.div>
@@ -163,8 +183,8 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSave("Platform")} className="btn-primary flex items-center gap-2 text-sm">
-            <FiSave size={16} /> Save Changes
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSave("Platform")} disabled={saving} className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50">
+            <FiSave size={16} /> {saving ? "Saving..." : "Save Changes"}
           </motion.button>
         </div>
       </motion.div>

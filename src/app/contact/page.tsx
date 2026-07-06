@@ -21,10 +21,19 @@ export default function ContactPage() {
       return
     }
     setSending(true)
-    await new Promise((r) => setTimeout(r, 1500))
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error()
+      toast.success("Message sent! We'll get back to you soon.")
+      setForm({ name: "", email: "", subject: "", message: "" })
+    } catch {
+      toast.error("Failed to send message. Please try again.")
+    }
     setSending(false)
-    toast.success("Message sent! We'll get back to you soon.")
-    setForm({ name: "", email: "", subject: "", message: "" })
   }
 
   const supportCards = [

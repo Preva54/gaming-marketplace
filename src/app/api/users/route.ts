@@ -43,6 +43,20 @@ export async function GET(request: NextRequest) {
         }),
         prisma.user.count({ where }),
       ])
+      if (users.length === 0 && inMemoryUsers.length > 0) {
+        let memUsers = inMemoryUsers.map((u: any) => ({
+          id: u.id, name: u.name, email: u.email, role: u.role,
+          wallet: 0, verificationStatus: u.verificationStatus || "UNVERIFIED",
+          twoFactorEnabled: u.twoFactorEnabled || false,
+          suspended: u.suspended || false, suspensionReason: u.suspensionReason || null,
+          createdAt: u.createdAt || new Date(),
+        }))
+        if (search) memUsers = memUsers.filter((u: any) => (u.name || "").toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
+        if (roleFilter) memUsers = memUsers.filter((u: any) => u.role === roleFilter)
+        const memTotal = memUsers.length
+        memUsers = memUsers.slice(skip, skip + limit)
+        return NextResponse.json({ users: memUsers, total: memTotal, page, totalPages: Math.ceil(memTotal / limit) })
+      }
       return NextResponse.json({ users, total, page, totalPages: Math.ceil(total / limit) })
     } catch {
       let users = inMemoryUsers.map((u: any) => ({

@@ -1,11 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { FiUser, FiBell, FiShield, FiLock, FiLink, FiTrash2, FiToggleLeft, FiEye, FiEyeOff, FiSmartphone } from "react-icons/fi"
 import toast from "react-hot-toast"
 
 export default function SettingsPage() {
+  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    username: "",
+    location: "",
+    bio: "",
+  })
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -25,6 +33,31 @@ export default function SettingsPage() {
   })
   const [activeTab, setActiveTab] = useState("profile")
 
+  useEffect(() => {
+    fetch("/api/users/me")
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setProfile({
+        name: data.name || "",
+        email: data.email || "",
+        username: data.username || "",
+        location: data.location || "",
+        bio: data.bio || "",
+      }))
+      .catch(() =>
+        fetch("/api/auth/session")
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(data => setProfile({
+            name: data.user?.name || "",
+            email: data.user?.email || "",
+            username: data.user?.username || "",
+            location: data.user?.location || "",
+            bio: data.user?.bio || "",
+          }))
+          .catch(() => {})
+      )
+      .finally(() => setLoading(false))
+  }, [])
+
   const tabs = [
     { id: "profile", label: "Profile", icon: <FiUser /> },
     { id: "notifications", label: "Notifications", icon: <FiBell /> },
@@ -32,7 +65,30 @@ export default function SettingsPage() {
     { id: "connections", label: "Connections", icon: <FiLink /> },
   ]
 
-  const handleChangePassword = () => {
+  const handleSaveProfile = async () => {
+    try {
+      const res = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      })
+      if (res.ok) {
+        toast.success("Profile saved!")
+      } else {
+        const fallback = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(profile),
+        })
+        if (fallback.ok) toast.success("Profile saved!")
+        else toast.error("Failed to save profile")
+      }
+    } catch {
+      toast.error("Failed to save profile")
+    }
+  }
+
+  const handleChangePassword = async () => {
     if (!passwords.current || !passwords.new || !passwords.confirm) {
       toast.error("Please fill in all password fields")
       return
@@ -45,8 +101,22 @@ export default function SettingsPage() {
       toast.error("Password must be at least 8 characters")
       return
     }
-    toast.success("Password changed successfully!")
-    setPasswords({ current: "", new: "", confirm: "" })
+    try {
+      const res = await fetch("/api/auth/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.new }),
+      })
+      if (res.ok) {
+        toast.success("Password changed successfully!")
+        setPasswords({ current: "", new: "", confirm: "" })
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to change password")
+      }
+    } catch {
+      toast.error("Failed to change password")
+    }
   }
 
   const handleDeleteAccount = () => {
@@ -65,26 +135,26 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Display Name</label>
-                <input type="text" defaultValue="John Gamer" className="input-field" />
+                <input type="text" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} className="input-field" />
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Email</label>
-                <input type="email" defaultValue="john@gamer.com" className="input-field" />
+                <input type="email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} className="input-field" />
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Username</label>
-                <input type="text" defaultValue="john_gamer" className="input-field" />
+                <input type="text" value={profile.username} onChange={e => setProfile({...profile, username: e.target.value})} className="input-field" />
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Location</label>
-                <input type="text" defaultValue="United States" className="input-field" />
+                <input type="text" value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})} className="input-field" />
               </div>
             </div>
             <div>
               <label className="text-sm text-gray-400 mb-1 block">Bio</label>
-              <textarea className="input-field resize-none" rows={3} defaultValue="Passionate gamer and collector." />
+              <textarea className="input-field resize-none" rows={3} value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
             </div>
-            <button className="btn-primary !py-2 !px-6 !text-sm">Save Changes</button>
+            <button onClick={handleSaveProfile} className="btn-primary !py-2 !px-6 !text-sm">Save Changes</button>
           </div>
         )
 
@@ -252,6 +322,8 @@ export default function SettingsPage() {
         )
     }
   }
+
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="w-8 h-8 border-2 border-[var(--neon-cyan)] border-t-transparent rounded-full animate-spin" /></div>
 
   return (
     <div className="min-h-screen p-4 md:p-8">

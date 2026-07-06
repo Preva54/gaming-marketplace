@@ -19,16 +19,7 @@ interface SupportTicket {
   createdAt: Date
 }
 
-const mockTickets: SupportTicket[] = [
-  { id: "TKT-1001", customer: "Alex Gamer", email: "alex@example.com", subject: "Payment issue - Order #2341", message: "I paid via PayPal but the order is still pending after 2 hours.", status: "OPEN", priority: "URGENT", createdAt: new Date(2026, 5, 30) },
-  { id: "TKT-1002", customer: "Sarah Seller", email: "sarah@example.com", subject: "Account recovery request", message: "I lost access to my seller account. Need help recovering it.", status: "IN_PROGRESS", priority: "HIGH", createdAt: new Date(2026, 5, 29) },
-  { id: "TKT-1003", customer: "Jake Player", email: "jake@example.com", subject: "Seller verification pending", message: "I submitted my verification documents 3 days ago but still no response.", status: "OPEN", priority: "MEDIUM", createdAt: new Date(2026, 5, 28) },
-  { id: "TKT-1004", customer: "Emma Trader", email: "emma@example.com", subject: "Refund not processed", message: "Requested a refund for order ORD-1005 but it hasn't been processed yet.", status: "RESOLVED", priority: "HIGH", createdAt: new Date(2026, 5, 27) },
-  { id: "TKT-1005", customer: "Liam Streamer", email: "liam@example.com", subject: "Product listing issue", message: "My product images are not showing up correctly in the marketplace.", status: "OPEN", priority: "LOW", createdAt: new Date(2026, 5, 26) },
-  { id: "TKT-1006", customer: "Olivia Pro", email: "olivia@example.com", subject: "Two-factor auth problem", message: "I can't log in because my 2FA code isn't being accepted.", status: "IN_PROGRESS", priority: "URGENT", createdAt: new Date(2026, 5, 25) },
-  { id: "TKT-1007", customer: "Noah Gamer", email: "noah@example.com", subject: "Wrong item delivered", message: "Received a different product than what I ordered.", status: "CLOSED", priority: "HIGH", createdAt: new Date(2026, 5, 24) },
-  { id: "TKT-1008", customer: "Ava Seller", email: "ava@example.com", subject: "Withdrawal request delay", message: "My withdrawal has been pending for 5 business days.", status: "OPEN", priority: "MEDIUM", createdAt: new Date(2026, 5, 23) },
-]
+
 
 const statusColors: Record<TicketStatus, string> = {
   OPEN: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
@@ -62,12 +53,25 @@ const itemVariants = {
 }
 
 export default function AdminSupportPage() {
-  const [tickets, setTickets] = useState(mockTickets)
+  const [tickets, setTickets] = useState<SupportTicket[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "ALL">("ALL")
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const perPage = 5
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch("/api/contact")
+        const data = await res.json()
+        const items = (Array.isArray(data) ? data : []).map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }))
+        setTickets(items)
+      } catch { setTickets([]) }
+      finally { setLoading(false) }
+    })()
+  }, [])
 
   const filtered = useMemo(() => {
     let result = tickets
@@ -136,7 +140,14 @@ export default function AdminSupportPage() {
       </motion.div>
 
       <motion.div variants={itemVariants} className="space-y-3">
-        {paginated.map((ticket) => (
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 text-[var(--foreground)]/50 py-12">
+            <div className="w-5 h-5 border-2 border-[var(--neon-cyan)] border-t-transparent rounded-full animate-spin" />
+            <span>Loading tickets...</span>
+          </div>
+        ) : paginated.length === 0 ? (
+          <div className="text-center py-12 text-[var(--foreground)]/40">No tickets found</div>
+        ) : paginated.map((ticket) => (
           <motion.div
             key={ticket.id}
             layout
